@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const network_1 = require("./utils/network"); //check host ip 區別出 AWS server(s)
+const port = 4210;
 const cors = require('cors'); //需要這個才能避免跨域問題
 const rateLimit = require('express-rate-limit'); // 控制 api 被呼叫次數限制
 const apiLimiter = rateLimit({
@@ -16,7 +17,6 @@ const apiLimiter = rateLimit({
 const app = (0, express_1.default)();
 app.use(express_1.default.json()); //需要這個才能解碼 req.body 成json格式
 app.use(cors());
-const port = 4210;
 // user 測試接口
 const userAPI = require('./routes/user'); // user-related api route
 // Apply the rate limiting to users 接口, **順序很重要, 要放在 API 前面

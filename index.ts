@@ -1,6 +1,8 @@
 import express, { Express, Request, Response } from "express";
 import { hostIP } from './utils/network' //check host ip 區別出 AWS server(s)
 
+const port = 4210;
+
 const cors = require('cors') //需要這個才能避免跨域問題
 const rateLimit = require('express-rate-limit') // 控制 api 被呼叫次數限制
 
@@ -14,7 +16,6 @@ const apiLimiter = rateLimit({
 const app: Express = express();
 app.use(express.json()) //需要這個才能解碼 req.body 成json格式
 app.use(cors())
-const port = 4210;
 
 // user 測試接口
 const userAPI = require('./routes/user') // user-related api route

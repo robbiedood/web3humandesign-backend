@@ -16,6 +16,7 @@ var express = require('express');
 var router = express.Router();
 const dotenv = require('dotenv'); //引入dotenv, 保護 credential
 dotenv.config();
+const { getAllPlanetsPositionfromDate } = require('../gears/ephemeris');
 // 定義取得 user 的GET接口 (沒有使用, 也許未來會需要)
 router.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userID = req.params.id;
@@ -25,6 +26,9 @@ router.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 }));
 // 定義第一次登入註冊接口, user第一次登入或user的local storage沒有cookie
 router.post('/signin', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // Test user date
+    var date = { year: 1000, month: 12, day: 1, hour: 4 };
+    console.log('Test date:', date);
     const user = yield User.findOne({
         address: req.body.address
     });
@@ -32,6 +36,8 @@ router.post('/signin', (req, res) => __awaiter(void 0, void 0, void 0, function*
     if (!user) {
         //(TODO Luke): 在後端 創建一個userObj, 包含nickname, humand design profile
         console.log('user does not exist, create one');
+        let planetsPos = getAllPlanetsPositionfromDate(date);
+        console.log(planetsPos);
     }
     else {
     }
