@@ -7,48 +7,45 @@ var swisseph = require ('swisseph');
 var calcuFlag = swisseph.SEFLG_SPEED | swisseph.SEFLG_SWIEPH; // for SWIEPH (compressed data);  "|": logical or (需要換成01進制) // var flag = swisseph.SEFLG_SPEED | swisseph.SEFLG_MOSEPH; // for Moshier (analytical formula)
 swisseph.swe_set_ephe_path('./ephe_data'); // set path to ephemeris data
 
+function getOppositePlanetPosition(pos){
+	return (180 + pos) % 360  // pos in decimal degree
+}
+
+
 function getPlanetPositionFromJulianDay(julianDayUT, planetFlag, calcuFlag){
-	var ret;
-	// Sun position
-	swisseph.swe_calc_ut(julianDayUT, planetFlag, calcuFlag, function (body) {
-    swisseph.swe_split_deg(body.longitude, swisseph.SE_SPLIT_DEG_ROUND_MIN, function(result){
-      console.log('Sun position:', result)
-			ret = result
-    });
-	})
-	return ret
+	let body = swisseph.swe_calc_ut(julianDayUT, planetFlag, calcuFlag)
+	return body.longitude //in degree
+}
+
+function getZodiacFromJulianDay(julianDayUT, planetFlag, calcuFlag){
+	let body = swisseph.swe_calc_ut(julianDayUT, planetFlag, calcuFlag)
+	return swisseph.swe_split_deg(body.longitude, swisseph.SE_SPLIT_DEG_ZODIACAL)
 }
 
 function getAllPlanetsPositionfromDate(date){
 
 	let julday_ut = swisseph.swe_julday(date.year, date.month, date.day, date.hour, swisseph.SE_GREG_CAL)
-	console.log('Julian UT day for date:', julday_ut);
 
-	// Sun position
-	let sun = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_SUN, calcuFlag)
-	// Moon position
-	let moon = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_MOON, calcuFlag)
-	// North Node position
-	let northNode = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_TRUE_NODE, calcuFlag)
-	// Earth position (人類學中, 太陽的對面就是地球 (180度差))
-	return {sun, moon, northNode}
+	let sun = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_SUN, calcuFlag) 	// Sun position
+	let earth = getOppositePlanetPosition(sun) 	// Earth position (人類學中, 太陽的對面就是地球 (180度差))
+	let moon = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_MOON, calcuFlag) 	// Moon position
+	let northNode = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_TRUE_NODE, calcuFlag) 	// North Node position
+	let southNode = getOppositePlanetPosition(northNode) 	// South Node position (人類學中, NorthNode的對面就是South Node (180度差))
+
+	let mercury = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_MERCURY, calcuFlag) //水星
+	let venus = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_VENUS, calcuFlag) //金星
+	let mars = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_MARS, calcuFlag) //火星
+	let jupiter = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_JUPITER, calcuFlag) //木星
+	let saturn = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_SATURN, calcuFlag) //土星
+	let uranus = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_URANUS, calcuFlag) //天王星
+	let neptune = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_NEPTUNE, calcuFlag) //海王星
+	let pluto = getPlanetPositionFromJulianDay(julday_ut, swisseph.SE_PLUTO, calcuFlag) //冥王星
+
+	return { sun, earth, moon, northNode, southNode, 
+		mercury, venus, mars, jupiter, saturn, 
+		uranus, neptune, pluto }
 }
 
-// // Julian day
-// swisseph.swe_julday(date.year, date.month, date.day, date.hour, swisseph.SE_GREG_CAL, function (julday_ut) {
-// 	//assert.equal(julday_ut, 2455927.5);
-// 	console.log('Julian UT day for date:', julday_ut);
-
-// 	// Sun position
-// 	let sunPos = getPlanetPosition(julday_ut, swisseph.SE_SUN, calcuFlag)
-// 	// Moon position
-// 	let moonPos = getPlanetPosition(julday_ut, swisseph.SE_MOON, calcuFlag)
-// 	// North Node position
-// 	let northNodePos = getPlanetPosition(julday_ut, swisseph.SE_TRUE_NODE, calcuFlag)
-
-// 	// Earth position (人類學中, 太陽的對面就是地球 (180度差))
-
-// });
 
 module.exports = {
 	getAllPlanetsPositionfromDate
