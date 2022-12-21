@@ -8,6 +8,8 @@ const dotenv = require('dotenv') //引入dotenv, 保護 credential
 dotenv.config()
 const { getAllPlanetsPositionfromDate } = require('../gears/ephemeris')
 const { getIchingFromPlanetsPosObj } = require('../gears/iching')
+const { getOnGatesFromIchingObj, getOnChannelsFromOnGates, getOnCentersFromOnChannel,
+getLifeProfile } = require('../gears/hd')
 
 // 定義取得 user 的GET接口 (沒有使用, 也許未來會需要)
 router.get('/:id', async(req, res)=>{
@@ -22,7 +24,8 @@ router.post('/signin', async(req, res)=> {
 
   // Test user date
   var date = {year: 1960, month: 1, day: 10, hour: 21};
-  console.log ('Test date:', date);
+  console.log ('Personality date:', date);
+
 
   const user = await User.findOne({
     address: req.body.address
@@ -34,8 +37,19 @@ router.post('/signin', async(req, res)=> {
       console.log('user does not exist, create one')
       let planetsPosObj = getAllPlanetsPositionfromDate(date)
       let ichingNumberObj = getIchingFromPlanetsPosObj(planetsPosObj)
-      console.log(planetsPosObj)
-      console.log(ichingNumberObj)
+
+      let onGates = getOnGatesFromIchingObj(ichingNumberObj)
+      let onChannels = getOnChannelsFromOnGates(onGates)
+      let onCenters = getOnCentersFromOnChannel(onChannels)
+      let lifeProfile = getLifeProfile(onCenters, onChannels)
+
+      // console.log('planet position: ', planetsPosObj)
+      // console.log('iching numbers: ', ichingNumberObj)
+      // console.log('on gates: ', onGates)
+      // console.log('on channels: ', onChannels)
+      // console.log('on centers: ', onCenters)
+      console.log('life profile is: ', lifeProfile)
+
   }else{
 
   }
