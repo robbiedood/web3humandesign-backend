@@ -4,6 +4,7 @@
 // 計算 design
 const { getAllPlanetsPositionfromDate, findDesignDate } = require('./ephemeris')
 const { getIchingFromPlanetsPosObj } = require('./iching')
+const { getNumofConnected } = require('../utils/graph')
 const {_channelPairDict, _centerChannelDict, _centerIndex, _motorCenters, _lifeDefinition} = require('../constants/hd')
 
 function getHDParms(bornDate){
@@ -133,12 +134,23 @@ function calculateConnectedCenterPairs(centersObj, channelsObj){
           var ve = _centerIndex[key]
         }
       }
-      // make sure 前者一定比後者小
-      if(vs<ve){
-        connectedCenterPairs.push([vs, ve])
-      }else{
-        connectedCenterPairs.push([ve, vs])
+      // make sure 沒有重複
+      let isRepeat = false
+      connectedCenterPairs.forEach(pair => {
+        if( (pair[0] == vs && pair[1] ==ve) || (pair[0] == ve && pair[1] == vs)){
+          isRepeat = true          
+        }
+      })
+
+      if(!isRepeat){
+        // make sure 前者一定比後者小
+        if(vs<ve){
+          connectedCenterPairs.push([vs, ve])
+        }else{
+          connectedCenterPairs.push([ve, vs])
+        }
       }
+
     }
 
     return {connectedCenterPairs, onCenters}
@@ -195,39 +207,21 @@ function getLifeType(centersObj, channelsObj){
 function getLifeDefinition(centersObj, channelsObj){
   //只保留 on 的 centers, 用array儲存, 且使用center index, (用數字 1 ~ 9 表示不同center)
   let {connectedCenterPairs, onCenters} = calculateConnectedCenterPairs(centersObj, channelsObj)
+  if(onCenters.length==0){
+    return _lifeDefinition[0] // reflector的情況, 那life definition就是 "Undefined"
+  }else{
+    //計算number of connected subset using BFS-based graph algorithm (undirect connected components)
+    //**Warning: 根據目前的graph library要求, 要把 onCenters & connectedCenterPairs 重新排列&命名, 0, 1, 2...
+    let numOfV = onCenters.length;
+    let renamingTable = {}
+    onCenters.forEach( (c, ind) => renamingTable[c] = ind )
+    let edgePairs = []
+    connectedCenterPairs.forEach( pair => edgePairs.push( [renamingTable[pair[0]], renamingTable[pair[1]]] ))
+    let numOfConnectedSubset = getNumofConnected(numOfV, edgePairs)
 
-  //建立 connectedObject
-  let connectedObj = {}
-  connectedCenterPairs.forEach(pair => connectedObj[pair[0]] = [])
-  connectedCenterPairs.forEach(pair => {
-    if(!connectedObj[pair[0]].includes(pair[1])){
-      connectedObj[pair[0]].push(pair[1])
-    }
-  })
-  console.log(connectedCenterPairs)
-  console.log(connectedObj)
-  console.log(onCenters)
-
-  //計算number of connected subset using i) connectedObj & ii) onCenters
-  let numConnected = 0;
-  while(onCenters.length>0){
-    numConnected+=1;
-    let x = onCenters.shift()
-    recursiveFunc(x) // 利用遞迴 !
+    return _lifeDefinition[numOfConnectedSubset]
   }
-
-  // 利用遞迴, 注意函數內的 connectedObj & onCenters是用先前算出來的, 當成global varialbe給遞迴函數使用
-  function recursiveFunc(x){
-    while(connectedObj[x]?.length>0){
-      let y = connectedObj[x].shift()
-      recursiveFunc(y)
-      onCenters = onCenters.filter(e => e != x)
-    }
-  }
-
-  return _lifeDefinition[numConnected]
 }
-
 
 export {
   getHDParms
