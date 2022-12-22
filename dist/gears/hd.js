@@ -1,75 +1,52 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getHDParms = void 0;
 // 這個script放置與計算 human design 相關的函數
 // 如 計算 On gate, On channel, On center
 // 計算 人生角色 (X/Y 人), 幾分人
-const _channelPairDict = {
-    1: [8],
-    2: [14],
-    3: [60],
-    4: [63],
-    5: [15],
-    6: [59],
-    7: [31],
-    9: [52],
-    10: [20, 34, 57],
-    11: [56],
-    12: [22],
-    13: [33],
-    16: [48],
-    17: [62],
-    18: [58],
-    19: [49],
-    20: [34],
-    21: [45],
-    23: [43],
-    24: [61],
-    25: [51],
-    26: [44],
-    27: [50],
-    28: [38],
-    29: [46],
-    30: [41],
-    32: [54],
-    34: [57],
-    35: [36],
-    37: [40],
-    39: [55],
-    42: [53],
-    47: [64],
-};
-const _centerChannelDict = {
-    root: [19, 38, 39, 41, 52, 53, 54, 58, 60],
-    sacral: [3, 5, 9, 14, 27, 29, 34, 42, 59],
-    solarPlexus: [6, 22, 30, 36, 37, 49, 55],
-    spleen: [18, 28, 32, 44, 48, 50, 57],
-    heart: [21, 26, 40, 51],
-    g: [1, 2, 7, 10, 13, 15, 25, 46],
-    throat: [8, 12, 16, 20, 23, 31, 33, 35, 45, 56, 62],
-    ajna: [4, 11, 17, 24, 43, 47],
-    head: [61, 63, 64]
-};
-const _centerIndex = {
-    root: 9,
-    sacral: 8,
-    solarPlexus: 7,
-    spleen: 6,
-    heart: 5,
-    g: 4,
-    throat: 3,
-    ajna: 2,
-    head: 1
-};
-function getOnGatesFromIchingObj(ichingObj) {
+// 計算 design
+const { getAllPlanetsPositionfromDate, findDesignDate } = require('./ephemeris');
+const { getIchingFromPlanetsPosObj } = require('./iching');
+const { _channelPairDict, _centerChannelDict, _centerIndex, _motorCenters, _lifeDefinition } = require('../constants/hd');
+function getHDParms(bornDate) {
+    // bornDate = {year, month, day, hour}
+    let designDate = findDesignDate(bornDate);
+    console.log('design date: ', designDate);
+    let bornPlanetsPos = getAllPlanetsPositionfromDate(bornDate);
+    // find a design date around 80 ~ 95 days before the born date s.t. sun is 88 degree behind
+    let designPlanetsPos = getAllPlanetsPositionfromDate(designDate);
+    console.log('born sun pos: ', bornPlanetsPos.sun);
+    console.log('design sun pos: ', designPlanetsPos.sun);
+    console.log('born - design: ', bornPlanetsPos.sun - designPlanetsPos.sun);
+    let bornIchingObj = getIchingFromPlanetsPosObj(bornPlanetsPos);
+    let designIchingObj = getIchingFromPlanetsPosObj(designPlanetsPos);
+    console.log('bornIchingObj: ', bornIchingObj);
+    console.log('designIchingObj: ', designIchingObj);
+    let lifeProfile = getLifeProfile(bornIchingObj, designIchingObj);
+    let gatesArray = getOnGatesArray(bornIchingObj, designIchingObj);
+    let channels = getOnChannelsFromOnGates(gatesArray);
+    let centers = getOnCentersFromOnChannel(channels);
+    let lifeDefinition = getLifeDefinition(centers, channels);
+    let lifeType = getLifeType(centers, channels);
+    return { gatesArray, channels, centers, lifeType, lifeProfile, lifeDefinition };
+}
+exports.getHDParms = getHDParms;
+function getOnGatesArray(bornIchingObj, designIchingObj) {
+    // 0: off, 1: red on (design), 2:gray on (personality/born), 3:both design&personality
     let gateArray = new Array(64).fill(0);
-    for (const value of Object.values(ichingObj)) {
+    for (const value of Object.values(designIchingObj)) {
         let ind = parseInt(value) - 1;
-        gateArray[ind] = 1;
+        gateArray[ind] = 1; // 1 means design on, 0 means the gate is off
+    }
+    for (const value of Object.values(bornIchingObj)) {
+        let ind = parseInt(value) - 1;
+        gateArray[ind] = gateArray[ind] ? 3 : 2; // 3 means both design & personality on, 2 means only personality on
     }
     return gateArray;
 }
-function getLifeRoleFromIchingObj(personalitySunIchingNumber, designSunIchingNumber) {
-    let personality = personalitySunIchingNumber % 1;
-    let design = designSunIchingNumber % 1;
+function getLifeProfile(bornIchingObj, designIchingObj) {
+    let personality = 10 * (bornIchingObj.sun) % 10;
+    let design = 10 * (designIchingObj.sun) % 10;
     return `${personality}/${design}`;
 }
 function getOnChannelsFromOnGates(gatesArray) {
@@ -115,7 +92,7 @@ function getOnCentersFromOnChannel(channelsObj) {
     }
     return onCentersObj;
 }
-function getLifeProfile(centersObj, channelsObj) {
+function calculateConnectedCenterPairs(centersObj, channelsObj) {
     //只保留 on 的 centers, 用array儲存, 且使用center index, (用數字 1 ~ 9 表示不同center)
     let onCenters = [];
     for (const [key, value] of Object.entries(centersObj)) {
@@ -125,7 +102,6 @@ function getLifeProfile(centersObj, channelsObj) {
     }
     //需要sorting, 且在javascript中, 數字排序需要自己寫comparison
     onCenters.sort((a, b) => a - b);
-    console.log('onCenters: ', onCenters);
     //只保留 on 的 channels, 用array儲存 string
     let onChannels = [];
     for (const [key, value] of Object.entries(channelsObj)) {
@@ -154,12 +130,71 @@ function getLifeProfile(centersObj, channelsObj) {
             connectedCenterPairs.push([ve, vs]);
         }
     }
+    return { connectedCenterPairs, onCenters };
+}
+function getLifeType(centersObj, channelsObj) {
+    //只保留 on 的 centers, 用array儲存, 且使用center index, (用數字 1 ~ 9 表示不同center)
+    let { connectedCenterPairs, onCenters } = calculateConnectedCenterPairs(centersObj, channelsObj);
+    //要確認 throat 有沒有跟 _motorCenters connected, 有的話就具有 "顯示" 的特性
+    //注意: 可以透過 g-中心 連接, 這樣也算
+    function checkThroatGConnected() {
+        const isThroatG = (pair) => (pair[0] == _centerIndex['throat'] && pair[1] == _centerIndex['g']);
+        return connectedCenterPairs.findIndex(isThroatG) != -1 ? true : false;
+    }
+    function checkManifesting() {
+        if (centersObj.throat && !centersObj.g) {
+            for (let i = 0; i < connectedCenterPairs.length; i++) {
+                let pair = connectedCenterPairs[i];
+                let c0 = Object.keys(_centerIndex)[pair[0] - 1];
+                let c1 = Object.keys(_centerIndex)[pair[1] - 1];
+                if ((c0 == 'throat' && _motorCenters.includes(c1)) || (c1 == 'throat' && _motorCenters.includes(c0))) {
+                    return true;
+                }
+            }
+        }
+        else if (checkThroatGConnected()) {
+            //透過 g 連結到 _motorCenters 也算
+            for (let i = 0; i < connectedCenterPairs.length; i++) {
+                let pair = connectedCenterPairs[i];
+                let c0 = Object.keys(_centerIndex)[pair[0] - 1];
+                let c1 = Object.keys(_centerIndex)[pair[1] - 1];
+                if ((c0 == 'g' && _motorCenters.includes(c1)) || (c1 == 'g' && _motorCenters.includes(c0))) {
+                    return true;
+                }
+            }
+        }
+        else {
+            return false;
+        }
+    }
+    let isManifesting = checkManifesting();
+    if (onCenters.length == 0) {
+        return 'Reflector';
+    }
+    else if (centersObj.sacral) {
+        return isManifesting ? 'Manifesting Generator' : 'Generator';
+    }
+    else if (isManifesting) {
+        return 'Manifestor';
+    }
+    else {
+        return 'Projector';
+    }
+}
+function getLifeDefinition(centersObj, channelsObj) {
+    //只保留 on 的 centers, 用array儲存, 且使用center index, (用數字 1 ~ 9 表示不同center)
+    let { connectedCenterPairs, onCenters } = calculateConnectedCenterPairs(centersObj, channelsObj);
     //建立 connectedObject
     let connectedObj = {};
     connectedCenterPairs.forEach(pair => connectedObj[pair[0]] = []);
-    connectedCenterPairs.forEach(pair => connectedObj[pair[0]].push(pair[1]));
-    console.log('connectedObj: ', connectedObj);
-    console.log('onCenters: ', onCenters);
+    connectedCenterPairs.forEach(pair => {
+        if (!connectedObj[pair[0]].includes(pair[1])) {
+            connectedObj[pair[0]].push(pair[1]);
+        }
+    });
+    console.log(connectedCenterPairs);
+    console.log(connectedObj);
+    console.log(onCenters);
     //計算number of connected subset using i) connectedObj & ii) onCenters
     let numConnected = 0;
     while (onCenters.length > 0) {
@@ -173,15 +208,8 @@ function getLifeProfile(centersObj, channelsObj) {
         while (((_a = connectedObj[x]) === null || _a === void 0 ? void 0 : _a.length) > 0) {
             let y = connectedObj[x].shift();
             recursiveFunc(y);
+            onCenters = onCenters.filter(e => e != x);
         }
-        onCenters = onCenters.filter(e => e != x);
     }
-    return numConnected;
+    return _lifeDefinition[numConnected];
 }
-module.exports = {
-    getOnGatesFromIchingObj,
-    getLifeRoleFromIchingObj,
-    getOnChannelsFromOnGates,
-    getOnCentersFromOnChannel,
-    getLifeProfile
-};

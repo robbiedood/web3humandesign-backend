@@ -6,10 +6,9 @@ var express = require('express')
 var router = express.Router()
 const dotenv = require('dotenv') //引入dotenv, 保護 credential
 dotenv.config()
-const { getAllPlanetsPositionfromDate } = require('../gears/ephemeris')
-const { getIchingFromPlanetsPosObj } = require('../gears/iching')
-const { getOnGatesFromIchingObj, getOnChannelsFromOnGates, getOnCentersFromOnChannel,
-getLifeProfile } = require('../gears/hd')
+const { getHDParms } = require('../gears/hd')
+
+
 
 // 定義取得 user 的GET接口 (沒有使用, 也許未來會需要)
 router.get('/:id', async(req, res)=>{
@@ -23,9 +22,7 @@ router.get('/:id', async(req, res)=>{
 router.post('/signin', async(req, res)=> {
 
   // Test user date
-  var date = {year: 1960, month: 1, day: 10, hour: 21};
-  console.log ('Personality date:', date);
-
+  var bornDate = {year: 1999, month: 2, day: 20, hour: 19};
 
   const user = await User.findOne({
     address: req.body.address
@@ -35,20 +32,11 @@ router.post('/signin', async(req, res)=> {
   if(!user){
       //(TODO Luke): 在後端 創建一個userObj, 包含nickname, humand design profile
       console.log('user does not exist, create one')
-      let planetsPosObj = getAllPlanetsPositionfromDate(date)
-      let ichingNumberObj = getIchingFromPlanetsPosObj(planetsPosObj)
+      let {gatesArray, channels, centers, lifeType, lifeProfile, lifeDefinition} = getHDParms(bornDate)
 
-      let onGates = getOnGatesFromIchingObj(ichingNumberObj)
-      let onChannels = getOnChannelsFromOnGates(onGates)
-      let onCenters = getOnCentersFromOnChannel(onChannels)
-      let lifeProfile = getLifeProfile(onCenters, onChannels)
-
-      // console.log('planet position: ', planetsPosObj)
-      // console.log('iching numbers: ', ichingNumberObj)
-      // console.log('on gates: ', onGates)
-      // console.log('on channels: ', onChannels)
-      // console.log('on centers: ', onCenters)
-      console.log('life profile is: ', lifeProfile)
+      console.log('life type: ', lifeType)
+      console.log('life profile: ', lifeProfile)
+      console.log('life definition: ', lifeDefinition)
 
   }else{
 

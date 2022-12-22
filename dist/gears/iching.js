@@ -1,5 +1,7 @@
 "use strict";
 // 由星體的角度位置找到對應的易經卦象位置 (共64卦, 非順序排列)
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getIchingFromPlanetsPosObj = void 0;
 const ichingOffset = 1.75; // in degree  從25卦開始, 36卦結束, 25卦原點在 -1.75度 (or 358.25度) 上, 以逆時鐘進行 (原文是寫: 有1degree45min落在Pisces星座上, 之後才在Aries星座上. 而Aries的起點是0星盤度)
 const ichingEachInterval = 360 / 64; // = 5.625 度
 const ichingInsideInterval = ichingEachInterval / 6; // = 0.9375度
@@ -29,6 +31,4 @@ function getIchingFromPlanetsPosObj(planetsPosObj) {
     }
     return ret;
 }
-module.exports = {
-    getIchingFromPlanetsPosObj
-};
+exports.getIchingFromPlanetsPosObj = getIchingFromPlanetsPosObj;

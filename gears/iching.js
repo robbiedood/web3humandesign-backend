@@ -36,6 +36,6 @@ function getIchingFromPlanetsPosObj(planetsPosObj){
 }
 
 
-module.exports = {
+export {
 	getIchingFromPlanetsPosObj
 }
