@@ -26,36 +26,41 @@ router.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 }));
 // 定義第一次登入註冊接口, user第一次登入或user的local storage沒有cookie
 router.post('/signin', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // Test user date
-    var bornDate = { year: 1999, month: 2, day: 20, hour: 19 };
+    let address = req.body.address;
+    let birthObj = req.body.birthObj;
+    // // user date example
+    // let birthObj = { birthDate: {year: 1964, month: 7, day: 26, hour: 3},
+    // birthPlace: {country: 'United States', state: 'Virginia', city: 'Arlington'} }
     const user = yield User.findOne({
-        address: req.body.address
+        address,
     });
     // 如果user不存在, 創建一個. 如果存在, load user data
     if (!user) {
         //(TODO Luke): 在後端 創建一個userObj, 包含nickname, humand design profile
         console.log('user does not exist, create one');
-        let { gatesArray, channels, centers, lifeType, lifeProfile, lifeDefinition } = getHDParms(bornDate);
-        console.log('life type: ', lifeType);
-        console.log('life profile: ', lifeProfile);
-        console.log('life definition: ', lifeDefinition);
+        let hddata = getHDParms(birthObj);
+        let newUser = yield User.create({ address, hddata, nickname: 'nickname' });
+        res.send(newUser);
     }
     else {
+        console.log('user exists, return user data to front end');
+        res.send(user);
     }
-    // await user.save()
-    // res.send(user)
 }));
 //TODO(luke): 可以用 get 取代
 // 定義自動登入接口; user 已經登入成功過, 並且有把invite code存在local storage
 router.post('/autoLogin', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let address = req.body.address;
     const user = yield User.findOne({
-        address: req.body.address
+        address
     });
     // 校驗username
     if (!user) {
         return res.status(422).send('User不存在'); //422錯誤: 查無此username (TODO Luke): 要讓User同意創建一個user
     }
-    res.send(user);
+    else {
+        res.send(user);
+    }
 }));
 /**
  * // 定義 update user history 的POST 接口

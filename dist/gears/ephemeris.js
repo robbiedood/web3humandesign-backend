@@ -43,16 +43,19 @@ function calculateSunPos(date) {
 function findDesignDate(bornDate) {
     //用search scan 法找到最接近 88度 的日子
     let sunPos = calculateSunPos(bornDate);
-    let utcBornTime = (new Date(Date.UTC(bornDate.year, bornDate.month - 1, bornDate.day, bornDate.hour))).getTime() / 1000 / 60 / 60; // 轉成以小時為單位, month是用 monthIndex 要減 1, 轉成UTC時間比較簡單
-    let ds = 83 * 24;
-    let de = 93 * 24;
+    const timeConversionUnit = 1000 * 60 * 60; // 轉成以1hr為單位, javascript Date object 是以 milli-sec 為單位, 1 sec = 1000 mili-sec, 60 sec = 1 min, 60 min = 1 hr
+    //選擇scan區間
+    let ds = 83 * 24 * 2;
+    let de = 93 * 24 * 2;
     let scanRange = [...Array(de - ds + 1).keys()].map(p => p + ds);
+    let utcBornTime = (new Date(Date.UTC(bornDate.year, bornDate.month - 1, //month是用 monthIndex 要減 1, 轉成UTC時間比較簡單
+    bornDate.day, bornDate.hour))).getTime() / timeConversionUnit; // 轉成以1hr為單位
     let cost = Infinity;
     let designDate = {};
     for (let i = 0; i < scanRange.length; i++) {
         let x = utcBornTime - scanRange[i];
         let rePattern = /([0-9]+)-([0-9]+)-([0-9]+)T([0-9]+):/gi;
-        let reMatch = rePattern.exec(new Date(x * 1000 * 60 * 60).toISOString());
+        let reMatch = rePattern.exec(new Date(x * timeConversionUnit).toISOString());
         let year = parseInt(reMatch[1]);
         let month = parseInt(reMatch[2]);
         let day = parseInt(reMatch[3]);

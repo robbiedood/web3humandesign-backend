@@ -8,12 +8,14 @@ exports.getHDParms = void 0;
 const { getAllPlanetsPositionfromDate, findDesignDate } = require('./ephemeris');
 const { getIchingFromPlanetsPosObj } = require('./iching');
 const { getNumofConnected } = require('../utils/graph');
+const { getUTCFromBirthDayAndPlace } = require('../utils/timezone');
 const { _channelPairDict, _centerChannelDict, _centerIndex, _motorCenters, _lifeDefinition } = require('../constants/hd');
-function getHDParms(bornDate) {
-    // bornDate = {year, month, day, hour}
-    let designDate = findDesignDate(bornDate);
+function getHDParms(birthObj) {
+    let { birthDate, birthPlace } = birthObj;
+    let birthUCT = getUTCFromBirthDayAndPlace(birthDate, birthPlace);
+    let designDate = findDesignDate(birthUCT);
     console.log('design date: ', designDate);
-    let bornPlanetsPos = getAllPlanetsPositionfromDate(bornDate);
+    let bornPlanetsPos = getAllPlanetsPositionfromDate(birthUCT);
     // find a design date around 80 ~ 95 days before the born date s.t. sun is 88 degree behind
     let designPlanetsPos = getAllPlanetsPositionfromDate(designDate);
     console.log('born sun pos: ', bornPlanetsPos.sun);
@@ -29,7 +31,8 @@ function getHDParms(bornDate) {
     let centers = getOnCentersFromOnChannel(channels);
     let lifeDefinition = getLifeDefinition(centers, channels);
     let lifeType = getLifeType(centers, channels);
-    return { gatesArray, channels, centers, lifeType, lifeProfile, lifeDefinition };
+    let authorityType = getAuthorityType(centers);
+    return { gatesArray, channels, centers, lifeType, lifeProfile, lifeDefinition, authorityType };
 }
 exports.getHDParms = getHDParms;
 function getOnGatesArray(bornIchingObj, designIchingObj) {
@@ -207,5 +210,28 @@ function getLifeDefinition(centersObj, channelsObj) {
         connectedCenterPairs.forEach(pair => edgePairs.push([renamingTable[pair[0]], renamingTable[pair[1]]]));
         let numOfConnectedSubset = getNumofConnected(numOfV, edgePairs);
         return _lifeDefinition[numOfConnectedSubset];
+    }
+}
+function getAuthorityType(centersObj) {
+    if (centersObj.solarPlexus) {
+        return 'Solar Plexus:Emotional';
+    }
+    else if (centersObj.sacral) {
+        return 'Sacral:Sacral';
+    }
+    else if (centersObj.spleen) {
+        return 'Spleen:Splenic';
+    }
+    else if (centersObj.heart) {
+        return 'Heart:Ego';
+    }
+    else if (centersObj.g) {
+        return 'G:Self-Projected';
+    }
+    else if (centersObj.ajna || centersObj.head) {
+        return 'Environment';
+    }
+    else {
+        return 'Lunar Cycle';
     }
 }

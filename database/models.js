@@ -5,15 +5,20 @@ mongoose.connect(process.env.DATABASE_ACCESS, ()=>console.log("Database connecte
 
 //定義 HumanDesignData 的模型約束 (可把計算channel on 交給前端用戶去計算)
 const HumanDesignSchema = new mongoose.Schema({
-  centerObj: {type: Map, of: String},
-  gates: [{type: Number}],
+  centers: {type: Map, of: String},
+  gatesArray: [{type: Number}],
+  channels: {type: Map, of: String},
+  lifeType: {type: String},
+  lifeProfile: {type: String},
+  lifeDefinition: {type: String},
+  authorityType: {type: String}
 })
 
 //定義 User 的模型約束
 const UserSchema = new mongoose.Schema({
   address: {type: String},
   nickname: {type: String},
-  hddata:[HumanDesignSchema]
+  hddata:HumanDesignSchema
 })
 
 const User = mongoose.model('User', UserSchema)
