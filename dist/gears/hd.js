@@ -5,17 +5,26 @@ exports.getHDParms = void 0;
 // 如 計算 On gate, On channel, On center
 // 計算 人生角色 (X/Y 人), 幾分人
 // 計算 design
-const { getAllPlanetsPositionfromDate, findDesignDate } = require('./ephemeris');
+const { getAllPlanetsPositionfromDate, calculateSunPos } = require('./ephemeris');
 const { getIchingFromPlanetsPosObj } = require('./iching');
 const { getNumofConnected } = require('../utils/graph');
 const { getUTCFromBirthDayAndPlace } = require('../utils/timezone');
 const { _channelPairDict, _centerChannelDict, _centerIndex, _motorCenters, _lifeDefinition } = require('../constants/hd');
-function getHDParms(birthObj) {
+function getHDParms(birthObj = {}) {
     let { birthDate, birthPlace } = birthObj;
-    let birthUCT = getUTCFromBirthDayAndPlace(birthDate, birthPlace);
-    let designDate = findDesignDate(birthUCT);
+    if (birthDate !== undefined && birthPlace !== undefined) {
+        var birthUTC = getUTCFromBirthDayAndPlace(birthDate, birthPlace); // 如果有給birthplace, 就要做gmtoffset校正, 如果沒有, 就假設是UTC
+    }
+    else {
+        let rePattern = /([0-9]+)-([0-9]+)-([0-9]+)T([0-9]+):/gi;
+        let reMatch = rePattern.exec(new Date().toISOString());
+        let [year, month, day, hour] = [reMatch[1], reMatch[2], reMatch[3], reMatch[4]].map(p => parseInt(p));
+        var birthUTC = { year, month, day, hour };
+    }
+    console.log('birth date: ', birthUTC);
+    let designDate = findDesignDate(birthUTC);
     console.log('design date: ', designDate);
-    let bornPlanetsPos = getAllPlanetsPositionfromDate(birthUCT);
+    let bornPlanetsPos = getAllPlanetsPositionfromDate(birthUTC);
     // find a design date around 80 ~ 95 days before the born date s.t. sun is 88 degree behind
     let designPlanetsPos = getAllPlanetsPositionfromDate(designDate);
     console.log('born sun pos: ', bornPlanetsPos.sun);
@@ -35,6 +44,35 @@ function getHDParms(birthObj) {
     return { gatesArray, channels, centers, lifeType, lifeProfile, lifeDefinition, authorityType };
 }
 exports.getHDParms = getHDParms;
+function findDesignDate(bornDate) {
+    //用search scan 法找到最接近 88度 的日子
+    let sunPos = calculateSunPos(bornDate);
+    const timeConversionUnit = 1000 * 60 * 60; // 轉成以1hr為單位, javascript Date object 是以 milli-sec 為單位, 1 sec = 1000 mili-sec, 60 sec = 1 min, 60 min = 1 hr
+    //選擇scan區間
+    let ds = 83 * 24;
+    let de = 93 * 24;
+    let scanRange = [...Array(de - ds + 1).keys()].map(p => p + ds);
+    let utcBornTime = (new Date(Date.UTC(bornDate.year, bornDate.month - 1, //month是用 monthIndex 要減 1, 轉成UTC時間比較簡單
+    bornDate.day, bornDate.hour))).getTime() / timeConversionUnit; // 轉成以1hr為單位
+    let cost = Infinity;
+    let designDate = {};
+    for (let i = 0; i < scanRange.length; i++) {
+        let x = utcBornTime - scanRange[i];
+        let rePattern = /([0-9]+)-([0-9]+)-([0-9]+)T([0-9]+):/gi;
+        let reMatch = rePattern.exec(new Date(x * timeConversionUnit).toISOString());
+        let year = parseInt(reMatch[1]);
+        let month = parseInt(reMatch[2]);
+        let day = parseInt(reMatch[3]);
+        let hour = parseInt(reMatch[4]);
+        let sunPosTmp = calculateSunPos({ year, month, day, hour });
+        let diff = Math.abs(((sunPos > sunPosTmp) ? (sunPos - sunPosTmp) : (360 - sunPosTmp + sunPos)) - 88);
+        if (diff < cost) {
+            cost = diff;
+            designDate = { year, month, day, hour };
+        }
+    }
+    return designDate;
+}
 function getOnGatesArray(bornIchingObj, designIchingObj) {
     // 0: off, 1: red on (design), 2:gray on (personality/born), 3:both design&personality
     let gateArray = new Array(64).fill(0);
@@ -214,22 +252,22 @@ function getLifeDefinition(centersObj, channelsObj) {
 }
 function getAuthorityType(centersObj) {
     if (centersObj.solarPlexus) {
-        return 'Solar Plexus:Emotional';
+        return 'Emotional Athority';
     }
     else if (centersObj.sacral) {
-        return 'Sacral:Sacral';
+        return 'Sacral Athority';
     }
     else if (centersObj.spleen) {
-        return 'Spleen:Splenic';
+        return 'Splenic Athority';
     }
     else if (centersObj.heart) {
-        return 'Heart:Ego';
+        return 'Ego Athority';
     }
     else if (centersObj.g) {
-        return 'G:Self-Projected';
+        return 'Self-Projected Athority';
     }
     else if (centersObj.ajna || centersObj.head) {
-        return 'Environment';
+        return 'Environmental Athority';
     }
     else {
         return 'Lunar Cycle';

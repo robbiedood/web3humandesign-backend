@@ -25,21 +25,15 @@ router.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     // res.send(user)
 }));
 // 定義第一次登入註冊接口, user第一次登入或user的local storage沒有cookie
-router.post('/signin', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post('/signup', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let address = req.body.address;
-    let birthObj = req.body.birthObj;
-    // // user date example
-    // let birthObj = { birthDate: {year: 1964, month: 7, day: 26, hour: 3},
-    // birthPlace: {country: 'United States', state: 'Virginia', city: 'Arlington'} }
-    const user = yield User.findOne({
-        address,
-    });
+    const user = yield User.findOne({ address });
     // 如果user不存在, 創建一個. 如果存在, load user data
     if (!user) {
         //(TODO Luke): 在後端 創建一個userObj, 包含nickname, humand design profile
         console.log('user does not exist, create one');
-        let hddata = getHDParms(birthObj);
-        let newUser = yield User.create({ address, hddata, nickname: 'nickname' });
+        let hddataWeb3 = getHDParms(); //給一個空的object, 等於使用server time now
+        let newUser = yield User.create({ address, hddataWeb3, nickname: 'nickname' });
         res.send(newUser);
     }
     else {

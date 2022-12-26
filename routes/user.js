@@ -19,25 +19,16 @@ router.get('/:id', async(req, res)=>{
 })
 
 // 定義第一次登入註冊接口, user第一次登入或user的local storage沒有cookie
-router.post('/signin', async(req, res)=> {
+router.post('/signup', async(req, res)=> {
 
-  let address = req.body.address
-  let birthObj = req.body.birthObj
-
-  // // user date example
-  // let birthObj = { birthDate: {year: 1964, month: 7, day: 26, hour: 3},
-  // birthPlace: {country: 'United States', state: 'Virginia', city: 'Arlington'} }
-  
-  const user = await User.findOne({
-    address,
-  })
-
+  let address = req.body.address  
+  const user = await User.findOne({address})
   // 如果user不存在, 創建一個. 如果存在, load user data
   if(!user){
     //(TODO Luke): 在後端 創建一個userObj, 包含nickname, humand design profile
     console.log('user does not exist, create one')
-    let hddata = getHDParms(birthObj)
-    let newUser = await User.create({address, hddata, nickname:'nickname'})
+    let hddataWeb3 = getHDParms() //給一個空的object, 等於使用server time now
+    let newUser = await User.create({address, hddataWeb3, nickname:'nickname'})
     res.send(newUser)
   }else{
     console.log('user exists, return user data to front end')
