@@ -56,6 +56,17 @@ router.post('/autoLogin', (req, res) => __awaiter(void 0, void 0, void 0, functi
         res.send(user);
     }
 }));
+//定義 user update information 的POST接口
+router.post('/update', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let { address, birthPlace, birthTime } = req.body;
+    console.log('birthPlace: ', birthPlace);
+    console.log('birthTime: ', birthTime);
+    // calculate hd params using birthPlace and birthTime
+    let hddataReality = getHDParms({ birthPlace, birthTime }); //給一個空的object, 等於使用server time now
+    let user = yield User.findOneAndUpdate({ address }, { birthPlace, birthTime, hddataReality }, { new: true });
+    yield user.save();
+    res.send(user);
+}));
 /**
  * // 定義 update user history 的POST 接口
 router.post('/updateHistory', async (req, res) => {

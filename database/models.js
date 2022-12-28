@@ -14,13 +14,23 @@ const HumanDesignSchema = new mongoose.Schema({
   authorityType: {type: String}
 })
 
+//定義 BirthPlaceData 的模型約束 (可把計算channel on 交給前端用戶去計算)
+const BirthPlaceSchema = new mongoose.Schema({
+  countryCode: {type: String},
+  stateCode: {type: String},
+  latitude: {type: Number},
+  longitude: {type: Number},
+})
+
 //定義 User 的模型約束
 const UserSchema = new mongoose.Schema({
   address: {type: String},
   nickname: {type: String},
   jointime: {type: String},
+  birthPlace: BirthPlaceSchema,
+  birthTime: {type: Map, of: Number},
   hddataWeb3:HumanDesignSchema,
-  hddateReality:HumanDesignSchema
+  hddataReality:HumanDesignSchema
 })
 
 const User = mongoose.model('User', UserSchema)

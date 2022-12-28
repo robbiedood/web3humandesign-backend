@@ -8,7 +8,8 @@ const State = require('country-state-city').State;
 const City = require('country-state-city').City;
 const allCountries = Country.getAllCountries();
 function getUTCFromBirthDayAndPlace(birthday, birthplace) {
-    let timeZone = getTimeZoneOfPlace(birthplace);
+    // let timeZone = getTimeZoneOfPlace(birthplace)
+    let timeZone = find(birthplace.latitude, birthplace.longitude);
     let dateUTC = dateWithTimeZone(timeZone[0], birthday);
     return dateUTC;
 }
@@ -38,7 +39,7 @@ function getCityObj(cityName, countryObj, stateObj) {
 function getTimeZoneOfPlace(placeObj) {
     let { country, state, city } = placeObj;
     let countryObj = getCountryObj(country);
-    // check 國家是否只有一個時區, 如果是直接返回國家coordinator, 要以array的形式返回, 跟find 返回形式一致
+    // check 國家是否只有一個時區, 如果是直接返回國家timezone, 要以array的形式返回, 跟find 返回形式一致
     if (countryObj.timezones.length == 1) {
         return [countryObj.timezones[0].zoneName];
     }

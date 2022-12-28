@@ -11,9 +11,9 @@ const { getNumofConnected } = require('../utils/graph');
 const { getUTCFromBirthDayAndPlace } = require('../utils/timezone');
 const { _channelPairDict, _centerChannelDict, _centerIndex, _motorCenters, _lifeDefinition } = require('../constants/hd');
 function getHDParms(birthObj = {}) {
-    let { birthDate, birthPlace } = birthObj;
-    if (birthDate !== undefined && birthPlace !== undefined) {
-        var birthUTC = getUTCFromBirthDayAndPlace(birthDate, birthPlace); // 如果有給birthplace, 就要做gmtoffset校正, 如果沒有, 就假設是UTC
+    let { birthPlace, birthTime } = birthObj;
+    if (birthTime !== undefined && birthPlace !== undefined) {
+        var birthUTC = getUTCFromBirthDayAndPlace(birthTime, birthPlace); // 如果有給birthplace, 就要做gmtoffset校正, 如果沒有, 就假設是UTC
     }
     else {
         let rePattern = /([0-9]+)-([0-9]+)-([0-9]+)T([0-9]+):/gi;
