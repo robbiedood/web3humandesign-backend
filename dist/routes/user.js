@@ -45,25 +45,35 @@ router.post('/signup', (req, res) => __awaiter(void 0, void 0, void 0, function*
 // 定義自動登入接口; user 已經登入成功過, 並且有把invite code存在local storage
 router.post('/autoLogin', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let address = req.body.address;
-    const user = yield User.findOne({
-        address
-    });
+    let hddataWeb3 = getHDParms(); //給一個空的argument = get today's human design (Web3先用today's 代替)
+    let user = yield User.findOneAndUpdate({ address }, { hddataWeb3 }, { new: true });
+    // const user = await User.findOne({
+    //   address
+    // })
     // 校驗username
     if (!user) {
         return res.status(422).send('User不存在'); //422錯誤: 查無此username (TODO Luke): 要讓User同意創建一個user
     }
     else {
+        yield user.save();
         res.send(user);
     }
 }));
 //定義 user update information 的POST接口
 router.post('/update', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     let { address, birthPlace, birthTime } = req.body;
-    console.log('birthPlace: ', birthPlace);
-    console.log('birthTime: ', birthTime);
     // calculate hd params using birthPlace and birthTime
     let hddataReality = getHDParms({ birthPlace, birthTime }); //給一個空的object, 等於使用server time now
     let user = yield User.findOneAndUpdate({ address }, { birthPlace, birthTime, hddataReality }, { new: true });
+    yield user.save();
+    res.send(user);
+}));
+//定義 user update information 的POST接口
+router.post('/gethd', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let { address, birthPlace, birthTime } = req.body;
+    // calculate hd params using birthPlace and birthTime
+    let hddataWeb3 = getHDParms({ birthPlace, birthTime }); //給一個空的object, 等於使用server time now
+    let user = yield User.findOneAndUpdate({ address }, { hddataWeb3 }, { new: true });
     yield user.save();
     res.send(user);
 }));
