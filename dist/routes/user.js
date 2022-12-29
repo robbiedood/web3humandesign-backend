@@ -77,24 +77,4 @@ router.post('/gethd', (req, res) => __awaiter(void 0, void 0, void 0, function* 
     yield user.save();
     res.send(user);
 }));
-/**
- * // 定義 update user history 的POST 接口
-router.post('/updateHistory', async (req, res) => {
-  const {_id, history} = req.body
-  console.log(history)
-  const user = await User.findById(_id)
-  // 不允許有任何重複.  有重複的要刪除, 再增加
-  //***注意: pop / push / shift / unshift 這四個操作不要連用, 不要與return連用.
-  if(user.history){
-    let histories = (user.history).filter(h => (h.displayAddress).toLowerCase() !== (history.displayAddress).toLowerCase()) // offer 用 "propertyAddress", history 裡用 "displayAddress"; 未來應該要整合
-    histories.unshift(history) //加入最新的
-    await User.findOneAndUpdate({_id}, {history: histories}, {new: true}) //用update的方式, 避免 version error
-  }else{
-    await User.findOneAndUpdate({_id}, {history: [history]}, {new :true})
-  }
-  // await user.save() //會有version error 問題, 這裡不使用 save
-  console.log('updated history')
-  res.send(true)
-})
- */
 module.exports = router;

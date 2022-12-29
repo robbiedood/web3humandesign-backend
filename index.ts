@@ -2,7 +2,7 @@ import express, { Express, Request, Response } from "express";
 import { hostIP } from './utils/network' //check host ip 區別出 AWS server(s)
 
 const port = 4210;
-
+const domainName = 'web3humandesign.com'
 const cors = require('cors') //需要這個才能避免跨域問題
 const rateLimit = require('express-rate-limit') // 控制 api 被呼叫次數限制
 
@@ -39,11 +39,11 @@ if(hostIP?.[0].includes('10.0.0.') || hostIP?.includes('172.31.15.151')){
   const https = require('https') // https server
   const fs = require('fs') //在AWS server上需要這一行, 才能讀取pem, 使用https
   const sslServer = https.createServer({
-    key: fs.readFileSync('/etc/letsencrypt/live/chainhome.us/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/chainhome.us/fullchain.pem')
+    key: fs.readFileSync(`/etc/letsencrypt/live/${domainName}/privkey.pem`),
+    cert: fs.readFileSync(`/etc/letsencrypt/live/${domainName}/fullchain.pem`)
   }, app)
 
   sslServer.listen(port, ()=> {
-    console.log('https://web3humandesign.org:'+port)
+    console.log(`https://${domainName}.com:`+port)
   })
 }
