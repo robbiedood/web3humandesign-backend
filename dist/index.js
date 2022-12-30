@@ -24,7 +24,7 @@ const userAPI = require('./routes/user'); // user-related api route
 app.use('/user', apiLimiter);
 app.use('/user', userAPI);
 app.get("/", (req, res) => {
-    res.send("Hello World from Express + TS !");
+    res.send("Hello, World !");
 });
 // 利用hostIP位置判斷是在own server (用http) or cloud server (需要https)
 console.log(`the server ip is ${network_1.hostIP[0]}`);
@@ -43,6 +43,6 @@ else {
         cert: fs.readFileSync(`/etc/letsencrypt/live/${domainName}/fullchain.pem`)
     }, app);
     sslServer.listen(port, () => {
-        console.log(`https://${domainName}.com:` + port);
+        console.log(`https://${domainName}:` + port);
     });
 }

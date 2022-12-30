@@ -24,7 +24,7 @@ app.use('/user', apiLimiter)
 app.use('/user', userAPI)
 
 app.get("/", (req: Request, res: Response)=>{
-  res.send("Hello World from Express + TS !")
+  res.send("Hello, World !")
 });
 
 // 利用hostIP位置判斷是在own server (用http) or cloud server (需要https)
@@ -44,6 +44,6 @@ if(hostIP?.[0].includes('10.0.0.') || hostIP?.includes('172.31.15.151')){
   }, app)
 
   sslServer.listen(port, ()=> {
-    console.log(`https://${domainName}.com:`+port)
+    console.log(`https://${domainName}:`+port)
   })
 }

@@ -25,26 +25,22 @@ router.post('/signup', async(req, res)=> {
   const user = await User.findOne({address})
   // 如果user不存在, 創建一個. 如果存在, load user data
   if(!user){
-    //(TODO Luke): 在後端 創建一個userObj, 包含nickname, humand design profile
-    console.log('user does not exist, create one')
     let hddataWeb3 = getHDParms() //給一個空的object, 等於使用server time now
     let newUser = await User.create({address, hddataWeb3, nickname:'nickname'})
+    console.log('new user created')
     res.send(newUser)
   }else{
     console.log('user exists, return user data to front end')
-    res.send(user)  
+    res.send(user)
   }
 })
 
 //TODO(luke): 可以用 get 取代
-// 定義自動登入接口; user 已經登入成功過, 並且有把invite code存在local storage
+// 定義自動登入接口; user 已經登入成功過, 有把address存在local storage
 router.post('/autoLogin', async(req, res)=>{
   let address = req.body.address
   let hddataWeb3 = getHDParms() //給一個空的argument = get today's human design (Web3先用today's 代替)
   let user = await User.findOneAndUpdate({address}, {hddataWeb3}, {new: true})
-  // const user = await User.findOne({
-  //   address
-  // })
   // 校驗username
   if(!user){
     return res.status(422).send('User不存在') //422錯誤: 查無此username (TODO Luke): 要讓User同意創建一個user
@@ -58,7 +54,7 @@ router.post('/autoLogin', async(req, res)=>{
 router.post('/update', async(req, res)=>{
   let {address, birthPlace, birthTime} = req.body
   // calculate hd params using birthPlace and birthTime
-  let hddataReality = getHDParms({birthPlace, birthTime}) //給一個空的object, 等於使用server time now
+  let hddataReality = getHDParms({birthPlace, birthTime})
   let user = await User.findOneAndUpdate({address}, {birthPlace, birthTime, hddataReality}, {new: true})
   await user.save();
   res.send(user)
@@ -68,7 +64,8 @@ router.post('/update', async(req, res)=>{
 router.post('/gethd', async(req, res)=>{
   let {address, birthPlace, birthTime} = req.body
   // calculate hd params using birthPlace and birthTime
-  let hddataWeb3 = getHDParms({birthPlace, birthTime}) //給一個空的object, 等於使用server time now
+  console.log('birthplace: ', birthPlace)
+  let hddataWeb3 = getHDParms({birthPlace, birthTime})
   let user = await User.findOneAndUpdate({address}, {hddataWeb3}, {new: true})
   await user.save();
   res.send(user)
