@@ -4,7 +4,7 @@
 // 計算 design
 const { getAllPlanetsPositionfromDate, calculateSunPos } = require('./ephemeris')
 const { getIchingFromPlanetsPosObj } = require('./iching')
-const { getNumofConnected } = require('../utils/graph')
+const { getNumofConnected, getConnectedGroups } = require('../utils/graph')
 const { getUTCFromBirthDayAndPlace } = require('../utils/timezone')
 const {_channelPairDict, _centerChannelDict, _centerIndex, _motorCenters, _lifeDefinition} = require('../constants/hd')
 
@@ -202,39 +202,97 @@ function calculateConnectedCenterPairs(centersObj, channelsObj){
     return {connectedCenterPairs, onCenters}
 }
 
+// function getLifeType(centersObj, channelsObj){
+//   //只保留 on 的 centers, 用array儲存, 且使用center index, (用數字 1 ~ 9 表示不同center)
+//   let {connectedCenterPairs, onCenters} = calculateConnectedCenterPairs(centersObj, channelsObj)
+//   //要確認 throat 有沒有跟 _motorCenters connected, 有的話就具有 "顯示" 的特性
+//   //注意: 可以透過 g-中心 連接, 這樣也算
+//   function checkThroatGConnected(){
+//     const isThroatG = (pair) => (pair[0] == _centerIndex['throat'] && pair[1] == _centerIndex['g'])
+//     return connectedCenterPairs.findIndex(isThroatG) != -1 ? true : false
+//   }
+
+//   function checkManifesting(){
+//     //TODO(Luke): 要檢驗 throat 跟 動力中心 (root, sacral, heart, solarPlexus 有無連通性)
+//     if(centersObj.throat){
+//       //Check 是否有從 throat 直接連到 動力中心 _motoCenters (root, sacral, heart, solarPlexus)
+//       for(let i=0; i<connectedCenterPairs.length; i++){
+//         let pair = connectedCenterPairs[i]
+//         let c0 = Object.keys(_centerIndex)[pair[0]-1]
+//         let c1 = Object.keys(_centerIndex)[pair[1]-1]
+//         if( (c0 == 'throat' && _motorCenters.includes(c1)) || (c1 == 'throat' && _motorCenters.includes(c0)) ){
+//           return true
+//         }
+//       }
+//     }
+
+//     if( checkThroatGConnected() ){
+//       //透過 g 連結到 _motorCenters 也算
+//       for(let i=0; i<connectedCenterPairs.length; i++){
+//         let pair = connectedCenterPairs[i]
+//         let c0 = Object.keys(_centerIndex)[pair[0]-1]
+//         let c1 = Object.keys(_centerIndex)[pair[1]-1]
+//         if( (c0 == 'g' && _motorCenters.includes(c1)) || (c1 == 'g' && _motorCenters.includes(c0)) ){
+//           return true
+//         }
+//       }
+//     }
+    
+//     //如果都沒有, 則不具備manifesting, 返回 false
+//     return false
+
+//   }
+
+//   let isManifesting = checkManifesting()
+
+//   if(onCenters.length==0){
+//     return 'Reflector'
+//   }else if(centersObj.sacral){
+//     return isManifesting ? 'Manifesting Generator' : 'Generator'
+//   }else if(isManifesting){
+//     return 'Manifestor'
+//   }else{
+//     return 'Projector'
+//   }
+// }
+
 function getLifeType(centersObj, channelsObj){
   //只保留 on 的 centers, 用array儲存, 且使用center index, (用數字 1 ~ 9 表示不同center)
   let {connectedCenterPairs, onCenters} = calculateConnectedCenterPairs(centersObj, channelsObj)
-  //要確認 throat 有沒有跟 _motorCenters connected, 有的話就具有 "顯示" 的特性
-  //注意: 可以透過 g-中心 連接, 這樣也算
-  function checkThroatGConnected(){
-    const isThroatG = (pair) => (pair[0] == _centerIndex['throat'] && pair[1] == _centerIndex['g'])
-    return connectedCenterPairs.findIndex(isThroatG) != -1 ? true : false
-  }
 
   function checkManifesting(){
-    if(centersObj.throat && !centersObj.g){
-      for(let i=0; i<connectedCenterPairs.length; i++){
-        let pair = connectedCenterPairs[i]
-        let c0 = Object.keys(_centerIndex)[pair[0]-1]
-        let c1 = Object.keys(_centerIndex)[pair[1]-1]
-        if( (c0 == 'throat' && _motorCenters.includes(c1)) || (c1 == 'throat' && _motorCenters.includes(c0)) ){
-          return true
-        }
-      }
-    }else if( checkThroatGConnected() ){
-      //透過 g 連結到 _motorCenters 也算
-      for(let i=0; i<connectedCenterPairs.length; i++){
-        let pair = connectedCenterPairs[i]
-        let c0 = Object.keys(_centerIndex)[pair[0]-1]
-        let c1 = Object.keys(_centerIndex)[pair[1]-1]
-        if( (c0 == 'g' && _motorCenters.includes(c1)) || (c1 == 'g' && _motorCenters.includes(c0)) ){
-          return true
-        }
-      }
-    }else{
+    //TODO(Luke): 直接檢驗 throat 跟 動力中心 (root, sacral, heart, solarPlexus 有無連通性) 是否連通 using Graph theory
+    //如果throat沒defined, 一定沒有manifesting 特性
+    if(!centersObj.throat){
       return false
     }
+
+    //計算number of connected subset using BFS-based graph algorithm (undirect connected components)
+    //**Warning: 根據目前的graph library要求, 要把 onCenters & connectedCenterPairs 重新排列&命名, 0, 1, 2...
+    let numOfV = onCenters.length;
+    let renamingTable = {}
+    onCenters.forEach( (c, ind) => renamingTable[c] = ind )
+    let edgePairs = []
+    connectedCenterPairs.forEach( pair => edgePairs.push( [renamingTable[pair[0]], renamingTable[pair[1]]] ))
+    let connectedGroups = getConnectedGroups(numOfV, edgePairs)
+    let throatName = renamingTable[_centerIndex['throat'].toString()] //這是renaming後的 throat index, 要先找到
+    let rootName = renamingTable[_centerIndex['root'].toString()] //這是renaming後的 throat index, 要先找到
+    let sacralName = renamingTable[_centerIndex['sacral'].toString()] //這是renaming後的 throat index, 要先找到
+    let heartName = renamingTable[_centerIndex['heart'].toString()] //這是renaming後的 throat index, 要先找到
+    let solarPlexusName = renamingTable[_centerIndex['solarPlexus'].toString()] //這是renaming後的 throat index, 要先找到
+
+    for(let i=0; i<connectedGroups.length; i++){
+      let subGroup = connectedGroups[i]
+      if(subGroup.includes(throatName) && 
+      (subGroup.includes(rootName) || subGroup.includes(sacralName) ||
+      subGroup.includes(heartName) || subGroup.includes(solarPlexusName))
+      ){
+        return true
+      }
+    }
+
+    return false
+      
   }
 
   let isManifesting = checkManifesting()
