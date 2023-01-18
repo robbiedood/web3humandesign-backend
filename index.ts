@@ -30,10 +30,23 @@ app.get("/", (req: Request, res: Response)=>{
 // 利用hostIP位置判斷是在own server (用http) or cloud server (需要https)
 console.log(`the server ip is ${hostIP[0]}`)
 if(hostIP?.[0].includes('10.0.0.') || hostIP?.includes('172.31.15.151')){
-  // 監聽自定義port number
+  //創建 https server
+  const https = require('https') // https server
+  const fs = require('fs') //在AWS server上需要這一行, 才能讀取pem, 使用https
+  const sslServer = https.createServer({
+    key: fs.readFileSync(`./privkey.pem`),
+    cert: fs.readFileSync(`./fullchain.pem`)
+  }, app)
+
+  // sslServer.listen(port, ()=> {
+  //   console.log(`https://${hostIP}:`+port)
+  // })
+
+  // 監聽自定義port number; http only, no https
   app.listen(port, () => {
     console.log(`${hostIP?.[0]}:${port}`);
   })
+
 }else{
 //創建 https server
   const https = require('https') // https server

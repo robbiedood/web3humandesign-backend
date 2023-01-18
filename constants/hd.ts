@@ -63,9 +63,9 @@ const _motorCenters = ['root', 'sacral', 'heart', 'solarPlexus']
 const _lifeDefinition = {
   0: 'Undefined',
   1: 'Single',
-  2: 'Split',
-  3: 'Triple Split',
-  4: 'Quadruple Split'
+  2: 'Double',
+  3: 'Triple',
+  4: 'Quadruple'
 }
 
 export {
